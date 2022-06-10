@@ -105,7 +105,14 @@ export default class {
     }
 
     private submitForm(session: FormSession) {
-        this.bot.formsApi.submitForm(session.guildId, session.form.id, session.answers);
+
+        const userInfo = this.bot.formsApi.getUserInfo(session.guildId, session.user.id);
+        if (!userInfo) {
+            this.bot.formsApi.submitForm(session.guildId, session.form.id, session.answers);
+        } else {
+            this.bot.formsApi.submitForm(session.guildId, session.form.id, session.answers, session.user.id);
+        }
+
         this.activeForms.delete(session.user.id);
     }
     

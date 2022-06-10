@@ -40,15 +40,21 @@ export default class {
         return form;
     }
 
-    public async submitForm(guildId: string, formId: number, answers: { [key: string]: string | string[] }) {
+    public async submitForm(guildId: string, formId: number, answers: { [key: string]: string | string[] }, userId: string = "") {
         const apiCredentials = await this.bot.getApiCredentials(guildId);
         if (!apiCredentials) {
             return;
         }
 
-        const body = {
+        let body = {
             field_values: answers,
         }
+
+        if (userId.length > 0) {
+            // @ts-ignore
+            body['user'] = `integration_id:discord:${userId}`
+        }
+
 
         await fetch(`${apiCredentials.url}forms/${formId}/submissions/create`, {
             method: 'POST',
@@ -58,5 +64,25 @@ export default class {
             },
             body: JSON.stringify(body)
         }).then((res) => res.json())
+    }
+
+    public async getUserInfo(guildId: string, userId: string) {
+        const apiCredentials = await this.bot.getApiCredentials(guildId);
+        if (!apiCredentials) {
+            return;
+        }
+
+        const user = await fetch(`${apiCredentials.url}users/integration_id:discord:${userId}`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${apiCredentials.key}`,
+            }
+        }).then((res) => res.json());
+
+        if (user.error && user.error === "nameless:cannot_find_user") {
+            return undefined;
+        }
+
+        return user;
     }
 }
