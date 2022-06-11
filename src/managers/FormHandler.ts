@@ -265,7 +265,7 @@ export default class {
     //
 
     public startCleanupTimer() {
-        setInterval(this.cleanUpForms, 60000); // Every minute
+        setInterval(() => this.cleanUpForms(), 60000); // Every minute
     }
 
     private cleanUpForms() {

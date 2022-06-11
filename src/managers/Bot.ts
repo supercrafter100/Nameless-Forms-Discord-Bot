@@ -56,7 +56,7 @@ export default class Bot extends Discord.Client<true> {
         const apiKey = await this.database.apikeys.get(guildId);
 
         if (!apiUrl || !apiKey) {
-            return null;
+            return undefined;
         }
 
         return {
