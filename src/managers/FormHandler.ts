@@ -104,9 +104,9 @@ export default class {
         this.AskQuestion(session);
     }
 
-    private submitForm(session: FormSession) {
+    private async submitForm(session: FormSession) {
 
-        const userInfo = this.bot.formsApi.getUserInfo(session.guildId, session.user.id);
+        const userInfo = await this.bot.formsApi.getUserInfo(session.guildId, session.user.id);
         if (!userInfo) {
             this.bot.formsApi.submitForm(session.guildId, session.form.id, session.answers);
         } else {

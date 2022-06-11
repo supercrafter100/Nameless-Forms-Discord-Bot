@@ -8,6 +8,8 @@ export default class Database {
     public apiurls!: Keyv<string>;
     public apikeys!: Keyv<string>;
 
+    private dbPath = `sqlite://${join(__dirname, "../../data/db.sqlite")}`
+
     constructor(public readonly client: Bot) {}
 
     private started = false;
@@ -20,16 +22,27 @@ export default class Database {
 
         this.apiurls = new Keyv({
             store: new KeyvSQLite({
-                uri: `sqlite://${join(__dirname, "../../data/db.sqlite")}`,
+                uri: this.dbPath,
             }),
             namespace: "apiurls",
         });
         this.apikeys = new Keyv({
             store: new KeyvSQLite({
-                uri: `sqlite://${join(__dirname, "../../data/db.sqlite")}`,
+                uri: this.dbPath,
             }),
             namespace: "apikeys",
         });
+    }
+    
+    public GetDatabaseForNamespace(namespace: string) {
+        const keyv = new Keyv({
+            store: new KeyvSQLite({
+                uri: this.dbPath,
+            }),
+            namespace,
+        });
+
+        return keyv;
     }
 
     public get logger() {

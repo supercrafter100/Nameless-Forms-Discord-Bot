@@ -34,7 +34,7 @@ export default class {
         }).then((res) => res.json()) as ApiForm;
 
         if (!form.fields) {
-            return; // Something went wrong as this should always be set
+            return; // Something went wrong as this should always be set. Perhaps the form doesn't exist?
         }
 
         return form;
@@ -56,14 +56,16 @@ export default class {
         }
 
 
-        await fetch(`${apiCredentials.url}forms/${formId}/submissions/create`, {
+        const response = await fetch(`${apiCredentials.url}forms/${formId}/submissions/create`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${apiCredentials.key}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(body)
-        }).then((res) => res.json())
+        }).then((res) => res.json());
+
+        console.log(response);
     }
 
     public async getUserInfo(guildId: string, userId: string) {

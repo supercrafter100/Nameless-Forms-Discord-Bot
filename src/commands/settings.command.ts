@@ -27,7 +27,6 @@ export default class extends Command {
             interaction.reply("This command can only be used in a server");
             return;
         }
-
         if (!interaction.member.permissions.has("MANAGE_GUILD")) {
             await interaction.reply(
                 'You do not have the required "Manage Guild" permission'

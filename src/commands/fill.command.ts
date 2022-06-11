@@ -36,10 +36,20 @@ export default class extends Command {
             return;
         }
 
+        
         const formId = interaction.options.getNumber("id")!;
         const formInfo = await client.formsApi.getFormInfo(interaction.guildId, formId);
         if (!formInfo) {
             interaction.reply("Could not find form with id " + formId);
+            return;
+        }
+
+        // Check if form is enabled or disabled
+        const storage = client.database.GetDatabaseForNamespace("enabledForms-" + interaction.guildId);
+        const enabled = await storage.get(formId.toString()) ?? false;
+
+        if (!enabled) {
+            interaction.reply("The form is disabled");
             return;
         }
 

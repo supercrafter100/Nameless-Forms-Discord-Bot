@@ -1,5 +1,6 @@
 import { Subcommand } from "@crystaldevelopment/command-handler/dist";
 import { CommandInteraction } from "discord.js";
+import markdownTable from "markdown-table";
 import Bot from "../../managers/Bot";
 
 export default class extends Subcommand {
@@ -35,8 +36,26 @@ export default class extends Subcommand {
                 `🔑 **API Key**: ${apikey ? `\`${apikey}\`` : "*Not set*"}`,
             ].join("\n")
         );
+        
+        // Forms enabled / disabled
+        const storage = client.database.GetDatabaseForNamespace("enabledForms-" + interaction.guildId);
+        const embed2 = client.embeds.base();
+        const forms = await client.formsApi.getForms(interaction.guildId);
+        if (!forms || !forms.length) {
+            interaction.reply("There are no forms on the site");
+            return;
+        }
+
+        const table = [];
+        table.push(["ID", "Name", "Enabled"]);
+        for (const form of forms) {
+            const enabled = await storage.get(form.id.toString()) ?? false;
+            table.push([form.id.toString(), form.title, enabled ? "Yes" : "No"]);
+        }
+
+        embed2.setDescription("```" + markdownTable(table) + "```");
 
         // Send the embed
-        interaction.reply({ embeds: [embed], ephemeral: true });
+        interaction.reply({ embeds: [embed, embed2], ephemeral: true });
     }
 }

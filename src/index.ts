@@ -28,7 +28,8 @@ logger.blank();
 const client = new Bot({
     intents: [
         Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
-        Intents.FLAGS.DIRECT_MESSAGES
+        Intents.FLAGS.DIRECT_MESSAGES,
+        Intents.FLAGS.GUILDS
     ],
     makeCache: Options.cacheWithLimits({
         MessageManager: 10,
