@@ -41,7 +41,7 @@ export default class extends Subcommand {
         const embed2 = client.embeds.base();
         const forms = await client.formsApi.getForms(interaction.guildId);
         if (!forms || !forms.length) {
-            embed2.setDescription('No forms on the site');
+            embed2.setDescription('No forms on the site yet');
         } else {
             const table = [];
             table.push(["ID", "Name", "Enabled"]);

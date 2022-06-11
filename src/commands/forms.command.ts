@@ -24,7 +24,7 @@ export default class extends Command {
         }
 
         const client = interaction.client as Bot;
-        if (!client.getApiCredentials(interaction.guildId)) {
+        if (!(await client.getApiCredentials(interaction.guildId))) {
             interaction.reply("You haven't set up the api credentials!");
             return;
         }

@@ -34,8 +34,12 @@ export default class extends Subcommand {
             interaction.reply("This command can only be used in a server");
             return;
         }
-        
         const client = interaction.client as Bot;
+        
+        if (!(await client.getApiCredentials(interaction.guildId))) {
+            interaction.reply("You haven't set up the api credentials!");
+            return;
+        }
 
         const formId = interaction.options.getNumber("form")!;
         const enabled = interaction.options.getBoolean("enabled")!;
