@@ -52,7 +52,7 @@ export default class extends Command {
         const embed = client.embeds.baseNoFooter();
         embed.setTitle('Available forms');
         embed.setFooter({ text: 'Use /fill <id> to fill out a form'});
-        embed.setDescription("```" + markdownTable(table) + "```");
+        embed.setDescription(filteredForms.length > 0 ? "```" + markdownTable(table) + "```" : "No forms are available to be filled in.");
         interaction.reply({
             embeds: [embed],
         });
