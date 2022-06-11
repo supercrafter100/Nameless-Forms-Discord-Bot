@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import { Collection, User } from "discord.js";
 import { ApiForm, FormField } from "../types";
 import NumberToEmoji from "../util/NumberToEmoji";
@@ -10,6 +11,7 @@ interface FormSession {
     questionIndex: number;
     questionNumber: number;
     answers: { [key: string]: string | string[] };
+    startedAt: Date;
 }
 
 const fieldTypes = {
@@ -28,6 +30,7 @@ const fieldTypes = {
 export default class {
 
     public activeForms: Collection<string, FormSession> = new Collection();
+    private formTimeout = 3600000; // 1 hour
 
     constructor (private readonly bot: Bot) {};
 
@@ -201,6 +204,7 @@ export default class {
             questionIndex: 0,
             questionNumber: 0,
             answers: {},
+            startedAt: new Date(),
         };
     }
 
@@ -254,5 +258,24 @@ export default class {
             return false;
         }
         return true;
+    }
+
+    //
+    // Form expiration handling to prevent memory increasing exponentially
+    //
+
+    public startCleanupTimer() {
+        setInterval(this.cleanUpForms, 60000); // Every minute
+    }
+
+    private cleanUpForms() {
+        const now = new Date();
+        for (const form of this.activeForms.toJSON()) {
+            if (now.getTime() - form.startedAt.getTime() > this.formTimeout) {
+                form.user.send("Your form has expired! Please execute the command again in the server to start a new form.");
+                this.bot.logger.info("Form from user " + chalk.yellow(form.user.id) + " has expired!");
+                this.activeForms.delete(form.user.id);
+            }
+        }
     }
 }

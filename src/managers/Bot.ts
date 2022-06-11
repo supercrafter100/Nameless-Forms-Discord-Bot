@@ -48,6 +48,7 @@ export default class Bot extends Discord.Client<true> {
     private async start() {
         await this.events.start();
         await this.database.start();
+        this.forms.startCleanupTimer();
     }
 
     public async getApiCredentials(guildId: string) {

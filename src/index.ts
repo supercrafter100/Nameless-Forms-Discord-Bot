@@ -4,6 +4,7 @@ import Logger from "./handlers/Logger";
 import chalk from "chalk";
 import Bot from "./managers/Bot";
 import { Intents, Options } from "discord.js";
+import { ActivityType } from "discord-api-types";
 
 dotenv.config();
 
@@ -39,7 +40,7 @@ const client = new Bot({
         activities: [
             {
                 name: "NamelessMC Forms",
-                type: "WATCHING",
+                type: "WATCHING"
             },
         ],
     },
