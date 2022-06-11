@@ -45,8 +45,7 @@ export default class extends Command {
         }
 
         // Check if form is enabled or disabled
-        const storage = client.database.GetDatabaseForNamespace("enabledForms-" + interaction.guildId);
-        const enabled = await storage.get(formId.toString()) ?? false;
+        const enabled = await client.database.GetFormEnabled(interaction.guildId, formId.toString());
 
         if (!enabled) {
             interaction.reply("The form is disabled");

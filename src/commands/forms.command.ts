@@ -35,13 +35,23 @@ export default class extends Command {
             return;
         }
 
-        
+        const storage = client.database.GetDatabaseForNamespace("enabledForms-" + interaction.guildId);
+        const filteredForms = [];
+
+        for (const form of forms) {
+            const enabled = await storage.get(form.id.toString()) ?? false;
+            if (enabled) {
+                filteredForms.push(form);
+            }
+        }     
 
         const table = [];
         table.push(["ID", "Name"]);
-        table.push(...forms.map((form) => [form.id.toString(), form.title]));
+        table.push(...filteredForms.map((form) => [form.id.toString(), form.title]));
 
         const embed = client.embeds.baseNoFooter();
+        embed.setTitle('Available forms');
+        embed.setFooter({ text: 'Use /fill <id> to fill out a form'});
         embed.setDescription("```" + markdownTable(table) + "```");
         interaction.reply({
             embeds: [embed],

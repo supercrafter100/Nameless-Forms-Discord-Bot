@@ -47,8 +47,7 @@ export default class extends Subcommand {
             return;
         }
 
-        const storage = client.database.GetDatabaseForNamespace("enabledForms-" + interaction.guildId);
-        await storage.set(formId.toString(), enabled ? "1" : "0");
+        await client.database.SetFormEnabled(interaction.guildId, formId.toString(), enabled);
 
         interaction.reply("The form has been " + (enabled ? "enabled" : "disabled"));
     }

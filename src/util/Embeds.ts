@@ -6,7 +6,7 @@ export default class Embeds {
 
     public base() {
         return new MessageEmbed().setColor("#2F3136").setFooter({
-            text: `Nameless Suggestions`,
+            text: `Nameless Forms`,
             iconURL: this.client.user.displayAvatarURL(),
         });
     }

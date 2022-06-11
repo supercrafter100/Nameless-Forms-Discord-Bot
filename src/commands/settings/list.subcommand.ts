@@ -38,22 +38,20 @@ export default class extends Subcommand {
         );
         
         // Forms enabled / disabled
-        const storage = client.database.GetDatabaseForNamespace("enabledForms-" + interaction.guildId);
         const embed2 = client.embeds.base();
         const forms = await client.formsApi.getForms(interaction.guildId);
         if (!forms || !forms.length) {
-            interaction.reply("There are no forms on the site");
-            return;
+            embed2.setDescription('No forms on the site');
+        } else {
+            const table = [];
+            table.push(["ID", "Name", "Enabled"]);
+            for (const form of forms) {
+                const enabled = await client.database.GetFormEnabled(interaction.guildId, form.id.toString());
+                table.push([form.id.toString(), form.title, enabled ? "Yes" : "No"]);
+            }
+    
+            embed2.setDescription("```" + markdownTable(table) + "```");
         }
-
-        const table = [];
-        table.push(["ID", "Name", "Enabled"]);
-        for (const form of forms) {
-            const enabled = await storage.get(form.id.toString()) ?? false;
-            table.push([form.id.toString(), form.title, enabled ? "Yes" : "No"]);
-        }
-
-        embed2.setDescription("```" + markdownTable(table) + "```");
 
         // Send the embed
         interaction.reply({ embeds: [embed, embed2], ephemeral: true });
