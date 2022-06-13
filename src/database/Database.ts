@@ -63,6 +63,10 @@ export default class Database {
         return row[0].enabled == 1;
     }
 
+    public async clearFormsEnabled(guildId: string) {
+        await this.connection.query(`DELETE FROM forms_enabled WHERE guild_id = ?`, [guildId]);
+    }
+
     public get logger() {
         return this.client.logger;
     }
