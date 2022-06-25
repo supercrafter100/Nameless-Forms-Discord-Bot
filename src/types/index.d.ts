@@ -16,7 +16,7 @@ export type FormField = {
     min: string;
     max: string;
     placeholder: string;
-    options: string; // Ffs partydragen why
+    options: string | string[];
     info: string;
 }
 
