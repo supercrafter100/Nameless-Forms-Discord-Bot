@@ -1,4 +1,4 @@
-export interface ApiForm {
+export type ApiForm = {
     id: number;
     url: string;
     url_full: string;
@@ -8,7 +8,7 @@ export interface ApiForm {
     fields: FormField[]
 }
 
-export interface FormField {
+export type FormField = {
     id: string;
     name: string;
     type: string;
@@ -18,4 +18,14 @@ export interface FormField {
     placeholder: string;
     options: string; // Ffs partydragen why
     info: string;
+}
+
+export type ApiFormSubmitResponse = {
+    submission_id: string;
+    link: string;
+}
+
+export type ApiFormSubmitError = {
+    error: string;
+    meta: string[];
 }

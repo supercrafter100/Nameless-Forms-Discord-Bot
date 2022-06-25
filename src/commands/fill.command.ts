@@ -8,9 +8,9 @@ export default class extends Command {
     public description = "Fill in a form via discord";
     public options: ApplicationCommandOptionData[] = [
         {
-            name: "id",
-            description: "The form id to fill in",
-            type: ApplicationCommandOptionTypes.NUMBER,
+            name: "name",
+            description: "The form to fill in",
+            type: ApplicationCommandOptionTypes.STRING,
             required: true,
         }
     ];
@@ -36,15 +36,15 @@ export default class extends Command {
             return;
         }
         
-        const formId = interaction.options.getNumber("id")!;
-        const formInfo = await client.formsApi.getFormInfo(interaction.guildId, formId);
+        const formName = interaction.options.getString("name")!;
+        const formInfo = await client.formsApi.getFormInfoByName(interaction.guildId, formName) || await client.formsApi.getFormInfo(interaction.guildId, parseInt(formName)); // Fall back to id if name is not found
         if (!formInfo) {
-            interaction.reply("Could not find form with id " + formId);
+            interaction.reply("Could not find form with name " + formName);
             return;
         }
 
         // Check if form is enabled or disabled
-        const enabled = await client.database.GetFormEnabled(interaction.guildId, formId.toString());
+        const enabled = await client.database.GetFormEnabled(interaction.guildId, formInfo.id.toString());
 
         if (!enabled) {
             interaction.reply("The form is disabled");

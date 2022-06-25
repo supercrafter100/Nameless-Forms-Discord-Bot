@@ -87,10 +87,10 @@
   dependencies:
     "json-buffer" "~3.0.1"
 
-"@keyvhq/mysql@^1.6.15":
-  "integrity" "sha512-y+ZwJOCrcM+nSBk05eoNeWYOHrfYvjbfcpnEB9IomL5ZhLYLc51WigV4zQyPNLOEOKzgGgIDs+QKbjyu2kPypQ=="
-  "resolved" "https://registry.npmjs.org/@keyvhq/mysql/-/mysql-1.6.15.tgz"
-  "version" "1.6.15"
+"@keyvhq/mysql@^1.6.16":
+  "integrity" "sha512-xFJaGHWThJ4ClutVFWf/vwW18NCD7BenGHPSNqvsuKumrnVFD+1wh5WGP8w7HcgTc/KKOAYp9uqNQEsF5CElZg=="
+  "resolved" "https://registry.npmjs.org/@keyvhq/mysql/-/mysql-1.6.16.tgz"
+  "version" "1.6.16"
   dependencies:
     "@keyvhq/sql" "^1.6.15"
     "mysql2" "~2.3.3"

@@ -6,7 +6,7 @@
   "dependencies": {
     "@crystaldevelopment/command-handler": "^1.0.8",
     "@keyvhq/core": "^1.6.14",
-    "@keyvhq/mysql": "^1.6.15",
+    "@keyvhq/mysql": "^1.6.16",
     "chalk": "4",
     "discord-api-types": "^0.26.1",
     "discord.js": "^13.8.0",

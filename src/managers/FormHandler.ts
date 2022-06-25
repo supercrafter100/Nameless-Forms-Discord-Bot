@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { Collection, User } from "discord.js";
-import { ApiForm, FormField } from "../types";
+import { ApiForm, ApiFormSubmitError, ApiFormSubmitResponse, FormField } from "../types";
 import NumberToEmoji from "../util/NumberToEmoji";
 import Bot from "./Bot";
 
@@ -93,12 +93,6 @@ export default class {
         session.questionNumber++;
 
         if (session.questionIndex >= session.form.fields.length) {
-            
-            // Confirmation embed
-            const embed = this.bot.embeds.baseNoFooter();
-            embed.setDescription('`✅` Form submitted!');
-            session.user.send({ embeds: [ embed ]});
-            
             // Submit form to website
             this.submitForm(session);
             return;
@@ -109,11 +103,25 @@ export default class {
 
     private async submitForm(session: FormSession) {
 
+        let response: ApiFormSubmitError | ApiFormSubmitResponse | undefined;
+
         const userInfo = await this.bot.formsApi.getUserInfo(session.guildId, session.user.id);
         if (!userInfo) {
-            this.bot.formsApi.submitForm(session.guildId, session.form.id, session.answers);
+            response = await this.bot.formsApi.submitForm(session.guildId, session.form.id, session.answers);
         } else {
-            this.bot.formsApi.submitForm(session.guildId, session.form.id, session.answers, session.user.id);
+            response = await this.bot.formsApi.submitForm(session.guildId, session.form.id, session.answers, session.user.id);
+        }   
+
+        if (response && "error" in response) {
+            // Error embed
+            const embed = this.bot.embeds.baseNoFooter();
+            embed.setDescription("`❌` An error occured while submitting your form:\n\n" + response.meta.join('\n'));
+            session.user.send({ embeds: [ embed ]});
+        } else {
+            // Confirmation embed
+            const embed = this.bot.embeds.baseNoFooter();
+            embed.setDescription('`✅` Form submitted!');
+            session.user.send({ embeds: [ embed ]});
         }
 
         this.activeForms.delete(session.user.id);
