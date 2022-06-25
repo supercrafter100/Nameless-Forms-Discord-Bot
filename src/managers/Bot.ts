@@ -16,7 +16,7 @@ export default class Bot extends Discord.Client<true> {
         createCommands: true,
         updateCommands: true,
         deleteCommands: true,
-        guildId: process.env.GUILDID
+        ...(process.env.GUILDID && { guildId: process.env.GUILDID })
 
     });
     public readonly events = new EventHandler(this);
