@@ -63,6 +63,5 @@ export default class Bot extends Discord.Client<true> {
             url: apiUrl + (apiUrl.endsWith('/') ? '' : '/'),
             key: apiKey,
         }
-
     }
 }

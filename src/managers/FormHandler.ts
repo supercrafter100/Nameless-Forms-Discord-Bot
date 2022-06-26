@@ -1,36 +1,47 @@
 import chalk from "chalk";
-import { Collection, User } from "discord.js";
+import { Collection, MessageAttachment, User } from "discord.js";
 import { ApiForm, ApiFormSubmitError, ApiFormSubmitResponse, FormField } from "../types";
 import NumberToEmoji from "../util/NumberToEmoji";
 import Bot from "./Bot";
+import fetch from 'node-fetch';
 
-interface FormSession {
+export type sessionAnswers = {
+    [key: string]: string | string[]
+}
+
+export type fileAnswers = {
+    [key: string]: string
+}
+
+export interface FormSession {
     form: ApiForm;
     user: User;
     guildId: string;
     questionIndex: number;
     questionNumber: number;
-    answers: { [key: string]: string | string[] };
+    answers: sessionAnswers;
+    files: fileAnswers;
     startedAt: Date;
 }
 
-const fieldTypes = {
-    1: "text",
-    2: "Options",
-    3: "Text area",
-    4: "Help box",
-    5: "Barrier",
-    6: "Number",
-    7: "Email adress",
-    8: "Radio checkbox",
-    9: "Checkbox",
-    10: "File"
+export enum fieldTypes {
+    TEXT = '1',
+    OPTIONS = '2',
+    TEXT_AREA = '3',
+    HELP_BOX = '4',
+    BARRIER = '5',
+    NUMBER = '6',
+    EMAIL_ADRESS = '7',
+    RADIO_CHECKBOX = '8',
+    CHECKBOX = '9',
+    FILE = '10'
 }
 
 export default class {
 
     public activeForms: Collection<string, FormSession> = new Collection();
     private formTimeout = 3600000; // 1 hour
+    private allowedImageExtensions = [".png", ".jpg", ".jpeg"];
 
     constructor (private readonly bot: Bot) {};
 
@@ -84,10 +95,59 @@ export default class {
         this.successfulAnswer(session, choices);
     }
 
+    public async handleFileResponse(user: User, files: MessageAttachment[]) {
+        const session = this.activeForms.get(user.id);
+        if (!session) {
+            this.bot.logger.error("No session found for user " + user.id);
+            return;
+        }
+
+        // If the field doesn't support it
+        const field = session.form.fields[session.questionIndex];
+        if (field.type !== fieldTypes.FILE) {
+            const embed = this.bot.embeds.base();
+            embed.setDescription("You cannot attach files to this question!");
+            session.user.send({ embeds: [ embed ]});
+            this.AskQuestion(session);
+            return;
+        }
+
+        if (files.length > 1) {
+            const embed = this.bot.embeds.base();
+            embed.setDescription("You can only attach one file!");
+            session.user.send({ embeds: [ embed ]});
+            this.AskQuestion(session);
+            return;
+        }
+
+        const file = files[0];
+
+        // Check if their extensions are allowed
+        if (!this.allowedImageExtensions.some(extension => file.name?.endsWith(extension))) {
+            const embed = this.bot.embeds.base();
+            embed.setDescription("The file was not ending with the correct extensions. The allowed extensions are: " + this.allowedImageExtensions.map(ext => `\`${ext}\``).join(', ')); // This is way too long. Whatever
+            session.user.send({ embeds: [ embed ]});
+            this.AskQuestion(session);
+            return;
+        }
+
+        const imageRequest = await fetch(file.url || file.proxyURL);
+        const blob = await imageRequest.arrayBuffer();
+        const image = `data:${imageRequest.headers.get("content-type")};base64,${Buffer.from(blob).toString("base64")}`;
+
+        if (!image) {
+            throw new Error("Something went wrong while trying to retrieve image from Discord");
+        }
+
+        this.successfulAnswer(session, image as any);
+    }
+
     public successfulAnswer(session: FormSession, response: string | string[]) {
         
         const field = session.form.fields[session.questionIndex];
 
+        if (field.type === fieldTypes.FILE) session.files[field.id] = response as string 
+        
         session.answers[field.id] = response;
         session.questionIndex++;
         session.questionNumber++;
@@ -115,7 +175,7 @@ export default class {
         if (response && "error" in response) {
             // Error embed
             const embed = this.bot.embeds.baseNoFooter();
-            embed.setDescription("`❌` An error occured while submitting your form:\n\n" + response.meta.join('\n'));
+            embed.setDescription("`❌` An error occured while submitting your form:\n\n" + (Array.isArray(response.meta) ? response.meta.join('\n') : `\`${JSON.stringify(response)}\``));
             session.user.send({ embeds: [ embed ]});
         } else {
             // Confirmation embed
@@ -148,7 +208,7 @@ export default class {
         const msg = await session.user.send({ embeds: [ embed ]});
         
         // Respond with all the choices if its an options embed
-        if (["2", "8", "9"].includes(session.form.fields[session.questionIndex].type)) {
+        if ([fieldTypes.OPTIONS, fieldTypes.RADIO_CHECKBOX, fieldTypes.CHECKBOX].includes(session.form.fields[session.questionIndex].type as fieldTypes)) {
             for (let i = 1; i <= this.getOptionsFromField(session.form.fields[session.questionIndex]).length; i++) {
                 await msg.react(NumberToEmoji(i));
             }
@@ -174,11 +234,11 @@ export default class {
             errors.push(`Too long! Maximum length is ${field.max}`);
         }
 
-        if (field.type == "6" && !/^[0-9]+$/.test(response)) {
+        if (field.type == fieldTypes.NUMBER && !/^[0-9]+$/.test(response)) {
             errors.push(`Not a number!`);
         }
 
-        if (field.type == "7" && !/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(response)) {
+        if (field.type == fieldTypes.EMAIL_ADRESS && !/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(response)) {
             errors.push(`Not a valid email adress!`);
         }
 
@@ -193,7 +253,7 @@ export default class {
             errors.push("You need to select at least one option!");
         }
 
-        if ((field.type === "2" || field.type == "8") && choices.length > 1) {
+        if ((field.type === fieldTypes.OPTIONS || field.type == fieldTypes.RADIO_CHECKBOX) && choices.length > 1) {
             errors.push(`You can only select one option!`);
         }
 
@@ -212,6 +272,7 @@ export default class {
             questionIndex: 0,
             questionNumber: 0,
             answers: {},
+            files: {},
             startedAt: new Date(),
         };
     }
@@ -220,24 +281,31 @@ export default class {
         const content = [];
 
         switch(field.type) {
-            case "1":
-            case "3":
+            case fieldTypes.TEXT:
+            case fieldTypes.TEXT_AREA:
                 content.push(field.name);
                 content.push('');
                 break;
 
-            case "2":
-            case "8":
-            case "9":
+            case fieldTypes.OPTIONS:
+            case fieldTypes.RADIO_CHECKBOX:
+            case fieldTypes.CHECKBOX:
                 {
                     content.push(field.name);
-                    content.push(`Type: ${fieldTypes[field.type]}`)
+                    content.push(`Type: ${this.getFieldTypeFromId(field.type)}`)
                     content.push('');
                     const options = this.getOptionsFromField(field);
                     const optionStrings = options.map((option, index) => `${NumberToEmoji(index + 1)} ${option}`)
                     content.push(optionStrings.join('\n'));
                 }
                 break;
+            
+            case fieldTypes.FILE:
+                {
+                    content.push(field.name);
+                    content.push(`*Please paste the file(s) below in one message*`);
+                    content.push('');
+                }
         }
 
         const min = parseInt(field.min);
@@ -257,12 +325,17 @@ export default class {
     }
 
     public getOptionsFromField(field: FormField) {
-        const options = field.options.split('\r,');
+        const options = (typeof field.options == "string") ? field.options.split('\r,') : field.options;
         return options;
     }
 
+    private getFieldTypeFromId(id: string) {
+        const typeIndex = Object.values(fieldTypes).indexOf(id as unknown as fieldTypes);
+        return Object.keys(fieldTypes)[typeIndex]
+    }
+
     private isQuestionObject(field: FormField) {
-        if (["4", "5", "10"].includes(field.type)) {
+        if ([fieldTypes.HELP_BOX, fieldTypes.BARRIER, fieldTypes.FILE].includes(field.type as fieldTypes)) {
             return false;
         }
         return true;
