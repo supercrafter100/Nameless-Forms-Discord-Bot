@@ -1,6 +1,6 @@
 import Bot from "./Bot";
 import fetch from 'node-fetch';
-import { ApiForm } from "../types";
+import { ApiForm, ApiFormSubmitError, ApiFormSubmitResponse } from "../types";
 
 export default class {
 
@@ -40,6 +40,15 @@ export default class {
         return form;
     }
 
+    public async getFormInfoByName(guildId: string, formName: string) {
+        const forms = await this.getForms(guildId);
+        const form = forms.find((form) => form.title.toLowerCase() === formName.toLowerCase());
+        if (!form) {
+            return;
+        }
+        return this.getFormInfo(guildId, form.id);
+    }
+
     public async submitForm(guildId: string, formId: number, answers: { [key: string]: string | string[] }, userId: string = "") {
         const apiCredentials = await this.bot.getApiCredentials(guildId);
         if (!apiCredentials) {
@@ -63,9 +72,9 @@ export default class {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(body)
-        }).then((res) => res.json());
+        }).then((res) => res.json()) as Promise<ApiFormSubmitResponse | ApiFormSubmitError>;
 
-        console.log(response);
+        return response;
     }
 
     public async getUserInfo(guildId: string, userId: string) {
